@@ -1,0 +1,97 @@
+mkdir hello-prisma 
+cd hello-prisma
+
+npm init -y
+npm install typescript ts-node @types/node --save-dev
+
+touch tsconfig.json
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "outDir": "dist",
+    "strict": true,
+    "lib": ["esnext"],
+    "esModuleInterop": true
+  }
+}
+
+npm install prisma -D
+
+/********************************************************************************
+*
+          prisma init
+*
+*********************************************************************************/
+npx prisma init --datasource-provider sqlite
+or
+npx prisma init --datasource-provider postgresql
+執行完 init 之後會產生 .env , prisma/schema.prisma
+將 database 的連線資訊帶入 .env 之中
+
+/********************************************************************************
+*
+          prisma model 建立
+*
+*********************************************************************************/
+打開 prisma/schema.prisma
+
+定義 model 
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+  posts Post[]
+}
+
+model Post {
+  id        Int     @id @default(autoincrement())
+  title     String
+  content   String?
+  published Boolean @default(false)
+  author    User    @relation(fields: [authorId], references: [id])
+  authorId  Int
+}
+
+/********************************************************************************
+*
+          prisma migrate 將 schema 資料寫入 database 之中
+*
+*********************************************************************************/
+npx prisma migrate dev --name foo-init
+
+This command did two things:
+It creates a new SQL migration file for this migration in the prisma/migrations directory.
+It runs the SQL migration file against the database.
+
+/********************************************************************************
+*
+          send queries to your database with Prisma Client
+
+          note : prisma<實例>.user<ModelName>.create<方法>()
+*
+*********************************************************************************/
+$touch script.ts
+
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+async function main() {
+  const user = await prisma.user.create({
+    data: {
+      name: 'Alice',
+      email: 'alice@prisma.io',
+    },
+  })
+  console.log(user)
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect()
+  })
+  .catch(async (e) => {
+    console.error(e)
+    await prisma.$disconnect()
+    process.exit(1)
+  })
