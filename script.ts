@@ -51,6 +51,9 @@ async function main () {
   /********************************************************************************
   *
             create Many
+
+            // 注意， createMany , findMany , updateMany , 回傳為 array , 部份 single 的屬性、方法不能用
+            ex : include: {} , select: {} ...
   *
   *********************************************************************************/
   const usersCounts = await prisma.user.createMany({
@@ -233,7 +236,7 @@ async function main () {
       UserPreferences: {
         emailUpdates: true
       }
-    },
+    }
     // include: { writtenPosts: { include: { categories: true } } }
   })
 
@@ -259,7 +262,33 @@ async function main () {
     include: { author: true, categories: true }
   })
 
-  console.log(userManyFilterRelationshipOneToOne)
+  // console.log(userManyFilterRelationshipOneToOne)
+
+  /********************************************************************************
+  *
+            updating database
+
+            method : update , updateMany
+
+            注意 : 指定的值必需是 unique attr , 像 name 就不行
+  *
+  *********************************************************************************/
+
+  const userUpdate = await prisma.user.update({
+    where: {
+      email: 'kyle@example.com'
+    },
+    data: {
+      email: 'kyle@exampleUpdate.com',
+      // age: { increment: 1 }
+      age: { multiply: 20}
+    }
+  })
+
+  const userUpdateMany = await prisma.user.updateMany({
+    where: { name: 'sally' },
+    data: { name: 'new sally' }
+  })
 
   // 清空資料庫
   //   await prisma.post.deleteMany()
