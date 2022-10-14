@@ -5,9 +5,9 @@ const prisma = new PrismaClient()
 
 async function main () {
   // delete 指定資料庫之前會檢查有沒有其他的 table 欄位為 require 並且跟此資料庫有 relation
+  await prisma.post.deleteMany()
   await prisma.user.deleteMany()
   await prisma.userPreferences.deleteMany()
-  await prisma.post.deleteMany()
   await prisma.category.deleteMany()
 
   /********************************************************************************
@@ -77,6 +77,39 @@ async function main () {
       }
     ]
   })
+
+  const categoryC = await prisma.category.create({
+    data: {
+      name: 'C'
+    }
+  })
+
+  const vincent = await prisma.user.create({
+    data: {
+      name: 'vincent',
+      email: 'vincent@example.com',
+      age: 35,
+      UserPreferences: {
+        // 一對一的關係，直接 create 產生
+        create: {
+          emailUpdates: true
+        }
+      }
+    }
+  })
+  
+  await prisma.post.create({
+    data: {
+      title: 'vincent`s post',
+      averageRating: 4.5,
+      authorId: vincent.id, // 一對多的關係，直接帶入 id 即可
+      categories: {
+        create: [{ name: 'A' }, { name: 'B' }], // 直接 create 其他 table 中的新資料
+        connect: [{ id: categoryC.id }] // 連接其他 table 已經有的資料
+      }
+    }
+  })
+
   // console.log(usersCounts)
 
   /********************************************************************************
@@ -178,7 +211,7 @@ async function main () {
   })
   console.log(userManyFilterAdvanced.length)
 
-  await prisma.user.deleteMany()
+  // await prisma.user.deleteMany()
 }
 
 /////////////////////////////////////////////////////////////////////////////
