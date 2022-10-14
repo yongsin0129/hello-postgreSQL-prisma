@@ -178,7 +178,7 @@ async function main () {
   })
   // console.log(userManyDistinct)
 
-  // take  (pagination) 取資料表的前二個 , 並 skip 掉第一個 , 另外注意資料生成的順序不一定是 date 的順序
+  // take, skip , orderBy  (pagination) 取資料表的前二個 , 並 skip 掉第一個 , 另外注意資料生成的順序不一定是 date 的順序
   const userManyTake = await prisma.user.findMany({
     where: {
       OR: [{ name: 'kyle' }, { name: 'sally' }]
@@ -217,12 +217,55 @@ async function main () {
       // NOT: [{ email: { startsWith: 'kyle' } }, { email: { startsWith: 'sally' } }]
     }
   })
-  console.log(userManyFilterAdvanced.length)
+  // console.log(userManyFilterAdvanced.length)
 
-  await prisma.post.deleteMany()
-  await prisma.user.deleteMany()
-  await prisma.userPreferences.deleteMany()
-  await prisma.category.deleteMany()
+  /********************************************************************************
+  *
+            filter operator relationship
+
+            一對一
+            一對多 兩者寫法不一樣
+  *
+  *********************************************************************************/
+
+  const userManyFilterRelationshipOneToOne = await prisma.user.findMany({
+    where: {
+      UserPreferences: {
+        emailUpdates: true
+      }
+    },
+    // include: { writtenPosts: { include: { categories: true } } }
+  })
+
+  // 對於一對多，多對多關係，可以使用三個附加參數：every，some和none，來定義條件應該匹配every，some和none相關節點
+  // some returns elements when any one of them matches the condition
+  // while every returns elements when all of them matches the condition.
+  const userManyFilterRelationship = await prisma.user.findMany({
+    where: {
+      // writtenPosts: { some: { title: 'vincent`s post' } } // 得到 vincent 的資料 , count : 1
+      writtenPosts: { every: { title: 'foo`s post' } } // 得到 4個 all user 的資料 , 不包括 vincent
+      // writtenPosts: { none: { title: 'vincent`s post' } } // 得到 4個 user 的資料 , 不包括 vincent
+    }
+  })
+
+  const postFilterRelationships = await prisma.post.findMany({
+    where: {
+      author: {
+        is: {
+          name: 'vincent'
+        }
+      }
+    },
+    include: { author: true, categories: true }
+  })
+
+  console.log(userManyFilterRelationshipOneToOne)
+
+  // 清空資料庫
+  //   await prisma.post.deleteMany()
+  //   await prisma.user.deleteMany()
+  //   await prisma.userPreferences.deleteMany()
+  //   await prisma.category.deleteMany()
 }
 
 /////////////////////////////////////////////////////////////////////////////
