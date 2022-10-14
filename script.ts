@@ -84,26 +84,34 @@ async function main () {
     }
   })
 
+  const UserPreferencesA = await prisma.userPreferences.create({
+    data: {
+      emailUpdates: true
+    }
+  })
+
   const vincent = await prisma.user.create({
     data: {
       name: 'vincent',
       email: 'vincent@example.com',
       age: 35,
-      UserPreferences: {
-        // 一對一的關係，直接 create 產生
-        create: {
-          emailUpdates: true
-        }
-      }
+      UserPreferencesId: UserPreferencesA.id
+      // UserPreferences: {
+      //   // 一對一的關係，直接 create 產生 , 或直接指定
+      //   create: {
+      //     emailUpdates: true
+      //   }
+      // }
     }
   })
-  
+
   await prisma.post.create({
     data: {
       title: 'vincent`s post',
       averageRating: 4.5,
       authorId: vincent.id, // 一對多的關係，直接帶入 id 即可
       categories: {
+        // 因為 post category 是 多對多的關係，需要寫 create or connect , 不然直接指定 id 即可
         create: [{ name: 'A' }, { name: 'B' }], // 直接 create 其他 table 中的新資料
         connect: [{ id: categoryC.id }] // 連接其他 table 已經有的資料
       }
@@ -211,7 +219,10 @@ async function main () {
   })
   console.log(userManyFilterAdvanced.length)
 
-  // await prisma.user.deleteMany()
+  await prisma.post.deleteMany()
+  await prisma.user.deleteMany()
+  await prisma.userPreferences.deleteMany()
+  await prisma.category.deleteMany()
 }
 
 /////////////////////////////////////////////////////////////////////////////
