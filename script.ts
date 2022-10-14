@@ -108,7 +108,7 @@ async function main () {
     }
   })
 
-  await prisma.post.create({
+  const newPost = await prisma.post.create({
     data: {
       title: 'vincent`s post',
       averageRating: 4.5,
@@ -117,6 +117,7 @@ async function main () {
         // 因為 post category 是 多對多的關係，需要寫 create or connect , 不然直接指定 id 即可
         create: [{ name: 'A' }, { name: 'B' }], // 直接 create 其他 table 中的新資料
         connect: [{ id: categoryC.id }] // 連接其他 table 已經有的資料
+        // 也可以使用 disconnect 讓兩個 table 關係消失
       }
     }
   })
@@ -149,7 +150,7 @@ async function main () {
   })
   // console.log(uniqueUser2)
 
-  // findFirst 跟 findUnique 的差別是 where 內的值不會受到 unique attr 的限制 ， ex : name
+  // findFirst,findMany 跟 findUnique 的差別是 where 內的值不會受到 unique attr 的限制 ， ex : name
   const userFirst = await prisma.user.findFirst({
     where: {
       name: 'sally'
@@ -281,7 +282,7 @@ async function main () {
     data: {
       email: 'kyle@exampleUpdate.com',
       // age: { increment: 1 }
-      age: { multiply: 20}
+      age: { multiply: 20 }
     }
   })
 
@@ -289,6 +290,46 @@ async function main () {
     where: { name: 'sally' },
     data: { name: 'new sally' }
   })
+
+  /********************************************************************************
+  *
+            delete , disconnect
+
+            prisma.model.delete or deleteMany
+  *
+  *********************************************************************************/
+
+  // await prisma.user.delete({
+  //   where: { id: userFoo.id }
+  // })
+
+  // await prisma.user.deleteMany({
+  //   where : 指定資料
+  // })
+
+  await prisma.user.update({
+    where: { email: 'vincent@example.com' },
+    data: {
+      UserPreferences: {
+        disconnect: true
+      },
+      writtenPosts: {
+        // disconnect: [{ id: 12 }, { id: 19 }],  指定部份資料取消關聯
+        // set:[], 取消所有關聯 ， 需注意雙方資料庫的欄位是否為必需
+        // deleteMany: {}, 刪除所有的關聯資料
+        deleteMany: [{ id: newPost.id }] //刪除特定的關聯資料
+      }
+    }
+  })
+
+  const userFind = await prisma.user.findFirst({
+    where: {
+      email: { contains: 'vincent' }
+    },
+    include: { writtenPosts: true }
+  })
+
+  console.log(userFind)
 
   // 清空資料庫
   //   await prisma.post.deleteMany()
