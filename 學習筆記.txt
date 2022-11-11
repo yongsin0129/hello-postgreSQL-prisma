@@ -55,8 +55,17 @@ model Post {
 /********************************************************************************
 *
           prisma migrate 將 schema 資料寫入 database 之中
+          
+          Supported database types and features - offical document
+          https://www.prisma.io/docs/concepts/components/prisma-migrate/supported-types-and-db-features
+          
+          CLI - Prisma CLI reference
+          https://www.prisma.io/docs/reference/api-reference/command-reference#db-pull
 *
 *********************************************************************************/
+npx prisma db push // 將 Prisma schema file 更新到 database (若無則會創一個) , 不產生 migrate , 適用於 原型 或 開發階段
+npx prisma db pull // 使用前先 back up schema file , 它會將 database 的資料覆蓋下來
+
 npx prisma migrate dev --name foo-init
 
 This command did two things:
